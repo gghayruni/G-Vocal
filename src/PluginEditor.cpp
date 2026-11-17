@@ -399,54 +399,66 @@ void GVocalAudioProcessorEditor::drawStageRow(juce::Graphics& g, int index, juce
     const float activity = stageActivity(index);
 
     auto row = r.toFloat();
-    g.setColour(active ? panel2.brighter(0.16f) : panel2.withAlpha(0.92f));
-    g.fillRoundedRectangle(row, 12.0f);
-    g.setColour(active ? accent.withAlpha(0.85f) : border);
-    g.drawRoundedRectangle(row, 12.0f, active ? 1.8f : 1.0f);
+    g.setColour(active ? panel2.brighter(0.18f) : panel2.withAlpha(0.94f));
+    g.fillRoundedRectangle(row, 14.0f);
+    g.setColour(active ? accent.withAlpha(0.9f) : border.withAlpha(0.9f));
+    g.drawRoundedRectangle(row, 14.0f, active ? 2.0f : 1.0f);
 
     if (active)
     {
-        g.setColour(withGlow(accent, 0.15f));
-        g.fillRoundedRectangle(row.reduced(1.5f), 12.0f);
+        g.setColour(withGlow(accent, 0.13f));
+        g.fillRoundedRectangle(row.reduced(1.2f), 14.0f);
     }
 
-    auto iconArea = juce::Rectangle<float>((float) r.getX() + 10.0f, (float) r.getY() + 10.0f, 34.0f, 34.0f);
-    drawStageIcon(g, index, iconArea, accent, active || on);
+    auto iconTile = juce::Rectangle<float>((float) r.getX() + 12.0f, (float) r.getY() + 9.0f, 48.0f, 36.0f);
+    g.setColour(juce::Colour::fromRGBA(10, 23, 38, active ? 220 : 210));
+    g.fillRoundedRectangle(iconTile, 10.0f);
+    g.setColour(active ? accent.withAlpha(0.75f) : border.withAlpha(0.85f));
+    g.drawRoundedRectangle(iconTile, 10.0f, 1.0f);
+    drawStageIcon(g, index, iconTile.reduced(9.0f), accent, active || on);
 
     g.setColour(text);
-    g.setFont(juce::Font(15.5f, juce::Font::bold));
-    g.drawText(juce::String(index + 1) + "  " + GVocalAudioProcessor::stageName(index), r.getX() + 55, r.getY() + 8, 155, 20, juce::Justification::centredLeft);
+    g.setFont(juce::Font(14.8f, juce::Font::bold));
+    g.drawText(juce::String(index + 1) + "  " + GVocalAudioProcessor::stageName(index), r.getX() + 74, r.getY() + 7, 108, 18, juce::Justification::centredLeft);
     g.setColour(muted);
-    g.setFont(juce::Font(12.5f));
-    g.drawText(stageSubtitle(index), r.getX() + 55, r.getY() + 28, 155, 18, juce::Justification::centredLeft);
+    g.setFont(juce::Font(11.4f));
+    g.drawText(stageSubtitle(index), r.getX() + 74, r.getY() + 25, 108, 16, juce::Justification::centredLeft);
 
-    auto lamp = juce::Rectangle<float>((float) r.getX() + 214.0f, (float) r.getY() + 18.0f, 10.0f, 10.0f);
+    g.setColour(borderSoft.brighter(0.12f));
+    g.drawLine((float) r.getX() + 188.0f, (float) r.getY() + 11.0f, (float) r.getX() + 188.0f, (float) r.getBottom() - 11.0f, 1.0f);
+
+    auto lamp = juce::Rectangle<float>((float) r.getX() + 205.0f, (float) r.getY() + 14.0f, 12.0f, 12.0f);
     g.setColour(on ? accent : borderSoft.brighter(0.25f));
     g.fillEllipse(lamp);
     if (on)
     {
-        g.setColour(withGlow(accent, 0.25f));
-        g.drawEllipse(lamp.expanded(3.5f), 2.0f);
+        g.setColour(withGlow(accent, 0.30f));
+        g.drawEllipse(lamp.expanded(4.2f), 2.0f);
     }
 
     const int bars = 4;
     const int lit = (int) std::round(activity * bars);
     for (int i = 0; i < bars; ++i)
     {
-        juce::Rectangle<float> b((float) r.getX() + 205.0f + i * 7.5f, (float) r.getBottom() - 15.0f - (i * 2.0f), 4.6f, 7.0f + i * 2.0f);
-        g.setColour(i < lit ? accent.withAlpha(0.95f) : borderSoft.brighter(0.15f));
+        const float bx = (float) r.getX() + 196.0f + i * 8.0f;
+        const float bh = 7.0f + i * 2.5f;
+        juce::Rectangle<float> b(bx, (float) r.getBottom() - bh - 10.0f, 5.0f, bh);
+        g.setColour(i < lit ? accent.withAlpha(0.98f) : borderSoft.brighter(0.15f));
         g.fillRoundedRectangle(b, 1.4f);
     }
 
-    g.setColour(on ? muted.withAlpha(0.9f) : muted.withAlpha(0.55f));
-    g.setFont(juce::Font(10.5f, juce::Font::bold));
-    g.drawText("ON", r.getX() + 244, r.getY() + 7, 26, 12, juce::Justification::centred);
-    g.drawText("LOCK", r.getX() + 282, r.getY() + 7, 38, 12, juce::Justification::centred);
+    g.setColour(borderSoft.brighter(0.12f));
+    g.drawLine((float) r.getX() + 242.0f, (float) r.getY() + 11.0f, (float) r.getX() + 242.0f, (float) r.getBottom() - 11.0f, 1.0f);
+
+    g.setColour(muted.withAlpha(on ? 0.96f : 0.75f));
+    g.setFont(juce::Font(10.2f, juce::Font::bold));
+    g.drawText("ON", r.getX() + 255, r.getY() + 6, 26, 11, juce::Justification::centred);
+    g.drawText("LOCK", r.getX() + 287, r.getY() + 6, 34, 11, juce::Justification::centred);
 
     if (locked)
     {
-        g.setColour(yellow.withAlpha(0.35f));
-        g.fillRoundedRectangle((float) r.getRight() - 46.0f, (float) r.getY() + 11.0f, 25.0f, 14.0f, 7.0f);
+        g.setColour(yellow.withAlpha(0.20f));
+        g.fillRoundedRectangle((float) r.getX() + 280.0f, (float) r.getY() + 3.0f, 41.0f, 14.0f, 7.0f);
     }
 }
 
@@ -462,9 +474,9 @@ void GVocalAudioProcessorEditor::paint(juce::Graphics& g)
     g.fillEllipse((float) getWidth() - 280.0f, -30.0f, 260.0f, 230.0f);
 
     const juce::Rectangle<float> header(18.0f, 16.0f, (float) getWidth() - 36.0f, 102.0f);
-    const juce::Rectangle<float> leftCard(18.0f, 136.0f, 320.0f, 564.0f);
-    const juce::Rectangle<float> analysisCard(352.0f, 136.0f, (float) getWidth() - 370.0f, 154.0f);
-    const juce::Rectangle<float> controlCard(352.0f, 305.0f, (float) getWidth() - 370.0f, 395.0f);
+    const juce::Rectangle<float> leftCard(18.0f, 136.0f, 338.0f, 564.0f);
+    const juce::Rectangle<float> analysisCard(370.0f, 136.0f, (float) getWidth() - 388.0f, 154.0f);
+    const juce::Rectangle<float> controlCard(370.0f, 305.0f, (float) getWidth() - 388.0f, 395.0f);
 
     auto drawCard = [&](juce::Rectangle<float> r)
     {
@@ -490,23 +502,23 @@ void GVocalAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText("g-vocal", 110, 27, 250, 40, juce::Justification::centredLeft);
     g.setColour(muted);
     g.setFont(juce::Font(13.0f));
-    g.drawText("HYBRID VOCAL PROCESSOR  |  v0.2 UI  |  HAYRUNI", 112, 68, 360, 18, juce::Justification::centredLeft);
+    g.drawText("HYBRID VOCAL PROCESSOR  |  v0.2.2 UI  |  HAYRUNI", 112, 68, 360, 18, juce::Justification::centredLeft);
 
     g.setColour(text);
     g.setFont(juce::Font(18.0f, juce::Font::bold));
-    g.drawText("PROCESSING CHAIN", 34, 153, 250, 22, juce::Justification::centredLeft);
+    g.drawText("PROCESSING CHAIN", 34, 152, 280, 22, juce::Justification::centredLeft);
     g.setColour(muted);
-    g.setFont(juce::Font(12.0f));
-    g.drawText("Each stage has its own activity lamp and mini meter.", 34, 176, 250, 16, juce::Justification::centredLeft);
+    g.setFont(juce::Font(11.4f));
+    g.drawText("Each stage has its own activity lamp and mini meter.", 34, 177, 290, 15, juce::Justification::centredLeft);
 
     for (int i = 0; i < 8; ++i)
-        drawStageRow(g, i, { 28, 205 + i * 61, 300, 52 });
+        drawStageRow(g, i, { 28, 205 + i * 62, 318, 54 });
 
     g.setColour(text);
     g.setFont(juce::Font(18.0f, juce::Font::bold));
-    g.drawText("SIGNAL ANALYSIS", 372, 152, 220, 22, juce::Justification::centredLeft);
+    g.drawText("SIGNAL ANALYSIS", 388, 152, 220, 22, juce::Justification::centredLeft);
 
-    auto pill = juce::Rectangle<float>(560.0f, 150.0f, 210.0f, 26.0f);
+    auto pill = juce::Rectangle<float>(575.0f, 150.0f, 210.0f, 26.0f);
     g.setColour(withGlow(mint, 0.16f));
     g.fillRoundedRectangle(pill, 12.0f);
     g.setColour(withGlow(mint, 0.85f));
@@ -517,43 +529,43 @@ void GVocalAudioProcessorEditor::paint(juce::Graphics& g)
 
     g.setColour(muted);
     g.setFont(juce::Font(12.2f));
-    g.drawText("RMS " + juce::String(proc.analysisRmsDb.load(), 1) + " dBFS", 788, 153, 110, 16, juce::Justification::centredLeft);
-    g.drawText("Peak " + juce::String(proc.analysisPeakDb.load(), 1) + " dBFS", 902, 153, 120, 16, juce::Justification::centredLeft);
+    g.drawText("RMS " + juce::String(proc.analysisRmsDb.load(), 1) + " dBFS", 800, 153, 110, 16, juce::Justification::centredLeft);
+    g.drawText("Peak " + juce::String(proc.analysisPeakDb.load(), 1) + " dBFS", 914, 153, 120, 16, juce::Justification::centredLeft);
 
-    drawMeter(g, { 372, 196, 670, 30 }, proc.inputPeakDb.load(), "INPUT");
-    drawMeter(g, { 372, 236, 670, 30 }, proc.outputPeakDb.load(), "OUTPUT");
+    drawMeter(g, { 388, 196, 654, 30 }, proc.inputPeakDb.load(), "INPUT");
+    drawMeter(g, { 388, 236, 654, 30 }, proc.outputPeakDb.load(), "OUTPUT");
 
     if (waitingForAnalysis)
     {
         g.setColour(muted.withAlpha(0.7f));
         g.setFont(juce::Font(11.5f));
-        g.drawText("Analysis progress", 373, 270, 100, 14, juce::Justification::centredLeft);
+        g.drawText("Analysis progress", 389, 270, 100, 14, juce::Justification::centredLeft);
         g.setColour(borderSoft.brighter(0.15f));
-        g.fillRoundedRectangle(470.0f, 272.0f, 350.0f, 6.0f, 3.0f);
+        g.fillRoundedRectangle(486.0f, 272.0f, 350.0f, 6.0f, 3.0f);
         g.setColour(mint);
-        g.fillRoundedRectangle(470.0f, 272.0f, 350.0f * juce::jlimit(0.0f, 1.0f, proc.analysisProgress.load()), 6.0f, 3.0f);
+        g.fillRoundedRectangle(486.0f, 272.0f, 350.0f * juce::jlimit(0.0f, 1.0f, proc.analysisProgress.load()), 6.0f, 3.0f);
     }
 
     const auto accent = stageAccent(selectedStage);
     g.setColour(accent);
-    g.fillRoundedRectangle(372.0f, 325.0f, 38.0f, 38.0f, 10.0f);
-    drawStageIcon(g, selectedStage, { 375.0f, 328.0f, 32.0f, 32.0f }, bgTop, true);
+    g.fillRoundedRectangle(388.0f, 325.0f, 38.0f, 38.0f, 10.0f);
+    drawStageIcon(g, selectedStage, { 391.0f, 328.0f, 32.0f, 32.0f }, bgTop, true);
 
     g.setColour(text);
     g.setFont(juce::Font(31.0f, juce::Font::bold));
-    g.drawText(GVocalAudioProcessor::stageName(selectedStage), 425, 323, 280, 32, juce::Justification::centredLeft);
+    g.drawText(GVocalAudioProcessor::stageName(selectedStage), 441, 323, 280, 32, juce::Justification::centredLeft);
     g.setColour(muted);
     g.setFont(juce::Font(14.0f));
-    g.drawText(stageDescription(selectedStage), 425, 356, 480, 20, juce::Justification::centredLeft);
+    g.drawText(stageDescription(selectedStage), 441, 356, 480, 20, juce::Justification::centredLeft);
 
     g.setColour(text);
     g.setFont(juce::Font(14.0f, juce::Font::bold));
-    g.drawText("STAGE INTENSITY", 376, 394, 150, 18, juce::Justification::centredLeft);
+    g.drawText("STAGE INTENSITY", 392, 394, 150, 18, juce::Justification::centredLeft);
     g.drawText(juce::String(std::round(stageActivity(selectedStage) * 100.0f)) + "%", 970, 394, 70, 18, juce::Justification::centredRight);
 
     for (int i = 0; i < 24; ++i)
     {
-        const float x = 540.0f + i * 18.0f;
+        const float x = 556.0f + i * 18.0f;
         const bool lit = i < (int) std::round(stageActivity(selectedStage) * 24.0f);
         g.setColour(lit ? accent.withAlpha(0.95f) : borderSoft.brighter(0.12f));
         g.fillRoundedRectangle(x, 397.0f, 11.0f, 18.0f, 3.0f);
@@ -561,10 +573,10 @@ void GVocalAudioProcessorEditor::paint(juce::Graphics& g)
 
     g.setColour(muted);
     g.setFont(juce::Font(11.2f));
-    g.drawText("Live status meter for the selected module", 376, 418, 270, 14, juce::Justification::centredLeft);
+    g.drawText("Live status meter for the selected module", 392, 418, 270, 14, juce::Justification::centredLeft);
 
     g.setColour(borderSoft.brighter(0.15f));
-    g.drawLine(374.0f, 630.0f, 1030.0f, 630.0f, 1.0f);
+    g.drawLine(390.0f, 630.0f, 1030.0f, 630.0f, 1.0f);
 
     g.setColour(text);
     g.setFont(juce::Font(16.0f, juce::Font::bold));
@@ -604,10 +616,10 @@ void GVocalAudioProcessorEditor::resized()
 
     for (int i = 0; i < 8; ++i)
     {
-        const int y = 205 + i * 61;
-        stageButtons[(size_t) i].setBounds(28, y, 225, 52);
-        stageEnabled[(size_t) i].setBounds(272, y + 17, 22, 20);
-        stageLocked[(size_t) i].setBounds(309, y + 17, 22, 20);
+        const int y = 205 + i * 62;
+        stageButtons[(size_t) i].setBounds(28, y, 250, 54);
+        stageEnabled[(size_t) i].setBounds(256, y + 22, 20, 18);
+        stageLocked[(size_t) i].setBounds(294, y + 22, 20, 18);
     }
 
     fix.setBounds(904, 323, 126, 32);
@@ -615,13 +627,13 @@ void GVocalAudioProcessorEditor::resized()
     int y = 446;
     for (size_t i = 0; i < controlSliders.size(); ++i)
     {
-        controlLabels[i]->setBounds(378, y, 165, 24);
-        controlSliders[i]->setBounds(545, y - 2, 485, 28);
+        controlLabels[i]->setBounds(394, y, 165, 24);
+        controlSliders[i]->setBounds(561, y - 2, 469, 28);
         y += 46;
     }
 
     if (safetyToggle)
-        safetyToggle->setBounds(378, y + 4, 340, 24);
+        safetyToggle->setBounds(394, y + 4, 340, 24);
 
-    status.setBounds(372, 270, 650, 18);
+    status.setBounds(388, 270, 640, 18);
 }
