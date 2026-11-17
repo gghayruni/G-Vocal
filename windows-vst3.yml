@@ -1,0 +1,53 @@
+name: Build G-Vocal Windows VST3 + installer
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore source directories (mobile browser upload)
+        shell: pwsh
+        run: |
+          if (Test-Path "PluginProcessor.cpp") {
+            New-Item -ItemType Directory -Force -Path "src" | Out-Null
+            Copy-Item -Path "PluginProcessor.cpp", "PluginProcessor.h", "PluginEditor.cpp", "PluginEditor.h" -Destination "src" -Force -ErrorAction Stop
+          }
+          if (Test-Path "g-vocal.nsi") {
+            New-Item -ItemType Directory -Force -Path "installer" | Out-Null
+            Copy-Item -Path "g-vocal.nsi" -Destination "installer/g-vocal.nsi" -Force -ErrorAction Stop
+          }
+          if (!(Test-Path "src/PluginProcessor.cpp")) { throw "Missing source code" }
+          if (!(Test-Path "installer/g-vocal.nsi")) { throw "Missing installer script" }
+      - name: Configure (JUCE 8 LTS security release)
+        shell: pwsh
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+      - name: Compile VST3
+        shell: pwsh
+        run: cmake --build build --config Release --target GVocal_VST3 --parallel 4
+      - name: Validate VST3 bundle
+        shell: pwsh
+        run: |
+          $p = "build/GVocal_artefacts/Release/VST3/G-Vocal.vst3"
+          if (!(Test-Path "$p/Contents/x86_64-win/G-Vocal.vst3")) { throw "Expected Windows plugin binary not found in $p" }
+      - uses: nsis-dev/setup-nsis@v1
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          makensis /V3 installer/g-vocal.nsi
+      - name: Place VST3 next to installer for convenient download
+        shell: pwsh
+        run: Copy-Item -Recurse -Force "build/GVocal_artefacts/Release/VST3/G-Vocal.vst3" "dist/G-Vocal.vst3"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: G-Vocal-Windows-VST3-and-Setup
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
