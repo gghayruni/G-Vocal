@@ -89,7 +89,7 @@ GVocalAudioProcessorEditor::GVocalAudioProcessorEditor(GVocalAudioProcessor& p)
     for (int i = 0; i < 8; ++i)
     {
         auto& b = stageButtons[(size_t) i];
-        b.setButtonText({});
+        b.setButtonText({}); // Hit area only; GVocalStageHitButton paints nothing.
         b.setColour(juce::TextButton::buttonColourId, juce::Colours::transparentBlack);
         b.setColour(juce::TextButton::buttonOnColourId, juce::Colours::transparentBlack);
         b.setColour(juce::TextButton::textColourOffId, juce::Colours::transparentBlack);

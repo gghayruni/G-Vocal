@@ -4,6 +4,14 @@
 #include <memory>
 #include <vector>
 
+// Invisible click target for stage rows. The editor draws the row itself;
+// an ordinary TextButton would add an unwanted rounded hover/press rectangle.
+class GVocalStageHitButton final : public juce::TextButton
+{
+public:
+    void paintButton(juce::Graphics&, bool, bool) override {}
+};
+
 class GVocalAudioProcessorEditor final : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
@@ -32,7 +40,7 @@ private:
     juce::TextButton analyze { "ANALYZE" }, engine { "ENGINE ON" }, fix { "RESET STAGE" };
     juce::ComboBox styles;
     juce::Label status, subheader;
-    std::array<juce::TextButton, 8> stageButtons;
+    std::array<GVocalStageHitButton, 8> stageButtons;
     std::array<juce::ToggleButton, 8> stageEnabled;
     std::array<juce::ToggleButton, 8> stageLocked;
     std::array<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>, 8> onAttachments, lockAttachments;
