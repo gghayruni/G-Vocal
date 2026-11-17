@@ -1,4 +1,4 @@
-name: .github/workflows/windows-vst3.yml
+name: Build G-Vocal Windows VST3 + installer
 on:
   workflow_dispatch:
   push:
