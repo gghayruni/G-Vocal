@@ -172,19 +172,26 @@ void GVocalAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce::M
         mid[c].peak(sr,3100,pres);
         high[c].highShelf(sr,juce::jmin(9500.f,0.45f*(float)sr),air);
     }
-    const float gateThreshold=dbToAmp(value("gate"));
-    const float t=dbToAmp(value("compThresh"));
+    // DSP 0.2.5: preserve every existing parameter ID/range and preset.
+    // Use sample-rate-independent envelope constants throughout.
+    const float gateThresholdDb=value("gate");
+    const float gateDetectorAttack=1.f-std::exp(-1.f/(float)(sr*.003));
+    const float gateDetectorRelease=1.f-std::exp(-1.f/(float)(sr*.075));
+    const float gateGainAttack=1.f-std::exp(-1.f/(float)(sr*.006));
+    const float gateGainRelease=1.f-std::exp(-1.f/(float)(sr*.085));
+    const float compThresholdDb=value("compThresh");
     const float ratio=juce::jmax(1.f,value("ratio"));
-    const float att=std::exp(-1.f/(float)(sr*value("attack")*0.001));
-    const float rel=std::exp(-1.f/(float)(sr*value("release")*0.001));
-    const float essThreshold=dbToAmp(value("essThresh"));
+    const float att=std::exp(-1.f/(float)(sr*value("attack")*.001));
+    const float rel=std::exp(-1.f/(float)(sr*value("release")*.001));
+    const float compSmoothing=1.f-std::exp(-1.f/(float)(sr*.008));
+    constexpr float compKneeDb=6.f; // internally fixed soft knee; no UI change
+    const float essThresholdDb=value("essThresh");
     const float essMax=value("essReduction");
+    const float essDetectorAttack=1.f-std::exp(-1.f/(float)(sr*.003));
+    const float essDetectorRelease=1.f-std::exp(-1.f/(float)(sr*.055));
+    const float essLP=1.f-std::exp(-2*pi*5500.f/(float)sr);
     const float drive=dbToAmp(value("drive"));
     const float satMix=value("satMix")*.01f;
-    const float gateSmoothing=1.f-std::exp(-1.f/(float)(sr*.025));
-    const float compSmoothing=1.f-std::exp(-1.f/(float)(sr*.008));
-    const float essSmoothing=1.f-std::exp(-1.f/(float)(sr*.008));
-    const float essLP=1.f-std::exp(-2*pi*5500.f/(float)sr);
 
     for(int c=0;c<ch;++c)
     {
@@ -195,9 +202,17 @@ void GVocalAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce::M
             if(on[0])
             {
                 x=hp[c].process(x);
-                gateEnv[c]+=(std::abs(x)-gateEnv[c])*.01f;
-                const float target=gateEnv[c]<gateThreshold?0.18f:1.f;
-                gateGain[c]+=(target-gateGain[c])*gateSmoothing;
+                const float level=std::abs(x);
+                const float detectorSpeed=level>gateEnv[c]?gateDetectorAttack:gateDetectorRelease;
+                gateEnv[c]+=(level-gateEnv[c])*detectorSpeed;
+                // Gentle downward expansion rather than an abrupt threshold switch.
+                // The 8 dB transition reduces audible pumping at the ends of words.
+                const float deltaDb=safeDb(gateEnv[c])-gateThresholdDb;
+                const float position=clampf((deltaDb+5.f)/8.f,0.f,1.f);
+                const float smooth=position*position*(3.f-2.f*position);
+                const float target=.18f+.82f*smooth;
+                const float gainSpeed=target>gateGain[c]?gateGainAttack:gateGainRelease;
+                gateGain[c]+=(target-gateGain[c])*gainSpeed;
                 x*=gateGain[c];
             }
             if(on[1])x=high[c].process(mid[c].process(low[c].process(x)));
@@ -205,19 +220,34 @@ void GVocalAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce::M
             {
                 const float level=std::abs(x);
                 const float coeff=level>compEnv[c]?att:rel;
-                compEnv[c]=coeff*compEnv[c]+(1-coeff)*level;
-                const float env=juce::jmax(compEnv[c],1.e-8f);
-                const float target=env>t?std::pow(t/env,1.f-1.f/ratio):1.f;
+                compEnv[c]=coeff*compEnv[c]+(1.f-coeff)*level;
+                const float overDb=safeDb(compEnv[c])-compThresholdDb;
+                const float slope=(1.f/ratio)-1.f;
+                float gainDb=0.f;
+                if(overDb>=compKneeDb*.5f)
+                    gainDb=slope*overDb;
+                else if(overDb> -compKneeDb*.5f)
+                {
+                    const float tKnee=overDb+compKneeDb*.5f;
+                    gainDb=slope*(tKnee*tKnee)/(2.f*compKneeDb);
+                }
+                const float target=dbToAmp(gainDb);
                 compGain[c]+=(target-compGain[c])*compSmoothing;
                 x*=compGain[c];
             }
             if(on[3])
             {
+                // Split at ~5.5 kHz and reduce primarily the sibilant band.
+                // Low and high sum exactly to x at zero reduction, so bypass
+                // transitions do not alter tone when the de-esser is idle.
                 essLow[c]+=essLP*(x-essLow[c]);
-                const float sib=std::abs(x-essLow[c]);
-                essEnv[c]+=(sib-essEnv[c])*essSmoothing;
-                const float over=essEnv[c]>essThreshold?juce::jmin(1.f,essEnv[c]/essThreshold-1.f):0.f;
-                x*=dbToAmp(-essMax*over);
+                const float highBand=x-essLow[c];
+                const float sib=std::abs(highBand);
+                const float detectorSpeed=sib>essEnv[c]?essDetectorAttack:essDetectorRelease;
+                essEnv[c]+=(sib-essEnv[c])*detectorSpeed;
+                const float overDb=safeDb(essEnv[c])-essThresholdDb;
+                const float reduction=essMax*clampf(overDb/10.f,0.f,1.f);
+                x=essLow[c]+highBand*dbToAmp(-reduction);
             }
             if(on[4])
             {
@@ -233,7 +263,7 @@ void GVocalAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce::M
         r.roomSize=value("room")*.01f;
         r.damping=value("damping")*.01f;
         r.wetLevel=value("revWet")*.01f;
-        r.dryLevel=1.f-r.wetLevel;
+        r.dryLevel=1.f; // Reverb should add space, not lower the dry vocal level.
         r.width=1.f;
         reverb.setParameters(r);
         if(ch==2) reverb.processStereo(buffer.getWritePointer(0),buffer.getWritePointer(1),n);
@@ -269,7 +299,13 @@ void GVocalAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,juce::M
         for(int c=0;c<ch;++c)
         {
             float wet=buffer.getSample(c,i)*outGain;
-            if(safety)wet=std::tanh(wet);  // sample safety: soft clip, NOT true-peak limiting
+            if(safety && std::abs(wet)>.85f)
+            {
+                // Transparent below -1.4 dBFS. Continuous slope at the knee;
+                // soft-ceiling only above the knee (not a true-peak limiter).
+                const float magnitude=std::abs(wet);
+                wet=std::copysign(.85f+.15f*std::tanh((magnitude-.85f)/.15f),wet);
+            }
             const auto y=wet*engineMix+dryBuffer.getSample(c,i)*(1.f-engineMix);
             buffer.setSample(c,i,y);
             pkOut=juce::jmax(pkOut,std::abs(y));
