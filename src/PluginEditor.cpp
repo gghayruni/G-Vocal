@@ -1,4 +1,6 @@
 #include "PluginEditor.h"
+#include <cmath>
+#include <initializer_list>
 
 namespace
 {
@@ -367,9 +369,17 @@ void GVocalAudioProcessorEditor::drawStageIcon(juce::Graphics& g, int index, juc
             g.drawLine(x + 10, y + h * 0.45f, x + w - 10, y + h * 0.45f, 1.8f);
             break;
         case 5:
-            g.drawArc(x + 4, y + 12, w - 8, h - 16, 0.1f, 3.04f, 2.0f);
-            g.drawArc(x + 8, y + 16, w - 16, h - 24, 0.12f, 3.02f, 2.0f);
+        {
+            // JUCE Graphics has no drawArc() method: stroke a juce::Path instead.
+            juce::Path outerArc, innerArc;
+            outerArc.addArc(x + 4.0f, y + 12.0f, w - 8.0f, h - 16.0f,
+                            juce::MathConstants<float>::pi, juce::MathConstants<float>::twoPi, true);
+            innerArc.addArc(x + 8.0f, y + 16.0f, w - 16.0f, h - 24.0f,
+                            juce::MathConstants<float>::pi, juce::MathConstants<float>::twoPi, true);
+            g.strokePath(outerArc, juce::PathStrokeType(2.0f));
+            g.strokePath(innerArc, juce::PathStrokeType(2.0f));
             break;
+        }
         case 6:
             g.drawEllipse(x + 2, y + 6, w * 0.55f, h - 12, 2.0f);
             g.drawEllipse(x + w * 0.35f, y + 6, w * 0.55f, h - 12, 2.0f);
