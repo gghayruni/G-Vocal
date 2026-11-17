@@ -12,6 +12,45 @@ public:
     void paintButton(juce::Graphics&, bool, bool) override {}
 };
 
+// Small, centred ON/LOCK controls. Standard ToggleButton checkboxes paint
+// relative to their widget's left side, causing drift/overlap in narrow rows.
+// Drawing each square in its own fixed bounds fixes that alignment.
+class GVocalMiniToggle final : public juce::ToggleButton
+{
+public:
+    void setLockMode(bool b) { lockMode = b; repaint(); }
+
+    void paintButton(juce::Graphics& g, bool hovered, bool pressed) override
+    {
+        auto square = getLocalBounds().toFloat().reduced(2.0f);
+        const bool selected = getToggleState();
+        const auto accent = lockMode ? juce::Colour::fromRGB(245, 196, 92)
+                                     : juce::Colour::fromRGB(39, 225, 189);
+        const auto background = juce::Colour::fromRGB(15, 29, 46);
+        const auto frame = juce::Colour::fromRGB(58, 81, 108);
+
+        g.setColour(selected ? accent.withAlpha(pressed ? 0.23f : 0.13f) : background);
+        g.fillRoundedRectangle(square, 6.0f);
+        g.setColour(selected ? accent.withAlpha(0.88f) : frame.brighter(hovered ? 0.35f : 0.0f));
+        g.drawRoundedRectangle(square, 6.0f, 1.4f);
+        if (selected)
+        {
+            g.setColour(accent);
+            juce::Path check;
+            check.startNewSubPath(square.getX() + square.getWidth() * 0.24f,
+                                  square.getY() + square.getHeight() * 0.52f);
+            check.lineTo(square.getX() + square.getWidth() * 0.43f,
+                         square.getY() + square.getHeight() * 0.69f);
+            check.lineTo(square.getX() + square.getWidth() * 0.76f,
+                         square.getY() + square.getHeight() * 0.32f);
+            g.strokePath(check, juce::PathStrokeType(2.5f,
+                         juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        }
+    }
+private:
+    bool lockMode = false;
+};
+
 class GVocalAudioProcessorEditor final : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
@@ -41,8 +80,8 @@ private:
     juce::ComboBox styles;
     juce::Label status, subheader;
     std::array<GVocalStageHitButton, 8> stageButtons;
-    std::array<juce::ToggleButton, 8> stageEnabled;
-    std::array<juce::ToggleButton, 8> stageLocked;
+    std::array<GVocalMiniToggle, 8> stageEnabled;
+    std::array<GVocalMiniToggle, 8> stageLocked;
     std::array<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>, 8> onAttachments, lockAttachments;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> engineAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> styleAttachment;
