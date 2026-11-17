@@ -51,7 +51,7 @@ GVocalAudioProcessorEditor::GVocalAudioProcessorEditor(GVocalAudioProcessor& p)
     subheader.setColour(juce::Label::textColourId,muted);
     subheader.setFont(juce::Font(12.f));
     addAndMakeVisible(subheader);
-    status.setText("HYBRID MODE  ·  Нажмите ANALYZE и воспроизведите вокал",juce::dontSendNotification);
+    status.setText("HYBRID MODE  |  Нажмите ANALYZE и включите воспроизведение",juce::dontSendNotification);
     status.setColour(juce::Label::textColourId,muted);
     status.setFont(juce::Font(13.f));
     addAndMakeVisible(status);
@@ -63,12 +63,12 @@ GVocalAudioProcessorEditor::GVocalAudioProcessorEditor(GVocalAudioProcessor& p)
         stageButtons[(size_t)i].onClick=[this,i] { selectStage(i); };
         addAndMakeVisible(stageButtons[(size_t)i]);
         auto& on=stageEnabled[(size_t)i];
-        on.setButtonText("ON"); on.setColour(juce::ToggleButton::textColourId,muted);
+        on.setButtonText(""); on.setColour(juce::ToggleButton::textColourId,muted);
         addAndMakeVisible(on);
         onAttachments[(size_t)i]=std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(
             proc.parameters,"on"+juce::String(i),on);
         auto& lock=stageLocked[(size_t)i];
-        lock.setButtonText("LOCK"); lock.setColour(juce::ToggleButton::textColourId,muted);
+        lock.setButtonText(""); lock.setColour(juce::ToggleButton::textColourId,muted);
         addAndMakeVisible(lock);
         lockAttachments[(size_t)i]=std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(
             proc.parameters,"lock"+juce::String(i),lock);
@@ -127,7 +127,7 @@ void GVocalAudioProcessorEditor::updateBypassLabel()
 {
     const auto* raw=proc.parameters.getRawParameterValue("engine");
     const bool on=raw&&raw->load()>=.5f;
-    engine.setButtonText(on?"● ENGINE ON":"○ BYPASS");
+    engine.setButtonText(on?"ENGINE ON":"BYPASS");
 }
 void GVocalAudioProcessorEditor::timerCallback()
 {
@@ -144,7 +144,7 @@ void GVocalAudioProcessorEditor::timerCallback()
         }
         else
             status.setText("АНАЛИЗ: "+juce::String((int)(100*proc.analysisProgress.load()))+
-                           "%  ·  звучащий вокал  ·  7 секунд",juce::dontSendNotification);
+                           "%  |  вокал  |  7 секунд",juce::dontSendNotification);
     }
     repaint(juce::Rectangle<int>(320,165,660,135));
 }
@@ -157,7 +157,7 @@ void GVocalAudioProcessorEditor::paint(juce::Graphics& g)
     g.fillRoundedRectangle(32.f,28.f,57.f,58.f,12.f);
     g.setColour(bg);g.setFont(juce::Font(44.f,juce::Font::bold));g.drawText("g",32,28,57,57,juce::Justification::centred);
     g.setColour(text);g.setFont(juce::Font(36.f,juce::Font::bold));g.drawText("g-vocal",105,24,300,50,juce::Justification::centredLeft);
-    g.setColour(muted);g.setFont(juce::Font(12.f));g.drawText("HYBRID VOCAL PROCESSOR  ·  v0.1  ·  HAYRUNI",106,80,380,18,juce::Justification::centredLeft);
+    g.setColour(muted);g.setFont(juce::Font(12.f));g.drawText("HYBRID VOCAL PROCESSOR  |  v0.1.1  |  HAYRUNI",106,80,380,18,juce::Justification::centredLeft);
 
     g.setColour(panel);
     g.fillRoundedRectangle(juce::Rectangle<float>(15,149,288,530),13);
@@ -173,7 +173,8 @@ void GVocalAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawText(juce::String(GVocalAudioProcessor::stageName(selectedStage))+"   /   MANUAL CONTROLS",
                337,356,440,26,juce::Justification::centredLeft);
     g.setColour(muted);g.setFont(juce::Font(12.f));
-    g.drawText("ON       LOCK",202,192,100,16,juce::Justification::centredLeft);
+    g.drawText("ON",208,192,38,16,juce::Justification::centred);
+    g.drawText("LOCK",252,192,46,16,juce::Justification::centred);
     drawMeter(g,{339,205,613,33},proc.inputPeakDb.load(),"INPUT");
     drawMeter(g,{339,250,613,33},proc.outputPeakDb.load(),"OUTPUT");
     if(waitingForAnalysis)
@@ -207,8 +208,8 @@ void GVocalAudioProcessorEditor::resized()
     {
         const int y=215+i*55;
         stageButtons[(size_t)i].setBounds(29,y,164,42);
-        stageEnabled[(size_t)i].setBounds(202,y+7,48,28);
-        stageLocked[(size_t)i].setBounds(248,y+7,55,28);
+        stageEnabled[(size_t)i].setBounds(211,y+7,32,28);
+        stageLocked[(size_t)i].setBounds(260,y+7,32,28);
     }
     fix.setBounds(788,358,170,29);
     int y=412;

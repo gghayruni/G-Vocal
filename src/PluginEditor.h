@@ -19,7 +19,7 @@ private:
     void drawMeter(juce::Graphics&,juce::Rectangle<int>,float,juce::String);
 
     GVocalAudioProcessor& proc;
-    juce::TextButton analyze { "◉ ANALYZE" }, engine { "ENGINE ON" }, fix { "✦ RESET STAGE" };
+    juce::TextButton analyze { "ANALYZE" }, engine { "ENGINE ON" }, fix { "RESET STAGE" };
     juce::ComboBox styles;
     juce::Label status, subheader;
     std::array<juce::TextButton,8> stageButtons;

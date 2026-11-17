@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(GVocal VERSION 0.1.0 LANGUAGES C CXX)
+project(GVocal VERSION 0.1.1 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -32,6 +32,12 @@ juce_add_plugin(GVocal
 )
 
 juce_generate_juce_header(GVocal)
+
+# Windows Visual Studio uses a non-UTF-8 source code page by default on some systems.
+# This project contains Russian UI text, so always decode the sources as UTF-8.
+if (MSVC)
+    target_compile_options(GVocal PRIVATE /utf-8)
+endif()
 
 target_sources(GVocal PRIVATE
     src/PluginProcessor.h
